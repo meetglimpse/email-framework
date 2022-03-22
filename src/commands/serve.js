@@ -84,7 +84,8 @@ const serve = async (env = 'local', config = {}) => {
               ext = get(config, 'build.templates.destination.ext', 'html')
             }
 
-            const finalDestination = path.join(dest, `${path.parse(file).name}.${ext}`)
+            const targetDir = path.dirname(file).replace(get(config, 'build.templates.source'), '').slice(1)
+            const finalDestination = path.join(dest, targetDir, `${path.parse(file).name}.${ext}`)
 
             await fs.outputFile(config.permalink || finalDestination, html)
           })
