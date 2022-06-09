@@ -102,6 +102,7 @@ module.exports = async (env, spinner, config) => {
               const compiled = await render(html, {
                 maizzle: {
                   ...config,
+                  file,
                   env
                 },
                 tailwind: {

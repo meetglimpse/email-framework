@@ -57,14 +57,18 @@ const serve = async (env = 'local', config = {}) => {
         spinner.start('Building email...')
 
         file = file.replace(/\\/g, '/')
+        file = file.replace('meta.json', 'content.html')
 
         if (config.events && typeof config.events.beforeCreate === 'function') {
           await config.events.beforeCreate(config)
         }
 
         const renderOptions = {
-          maizzle: config,
-          ...config.events
+          maizzle: {
+            ...config,
+            file
+          },
+          ...config.events,
         }
 
         renderToString(
