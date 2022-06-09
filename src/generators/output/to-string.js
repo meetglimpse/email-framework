@@ -22,13 +22,9 @@ module.exports = async (html, options) => {
   let config = merge(fileConfig, get(options, 'maizzle', {}))
 
   const tailwindConfig = get(options, 'tailwind.config', {})
-  const cssString = get(options, 'tailwind.css', '@tailwind components; @tailwind utilities;')
+  const cssString = get(options, 'tailwind.css', '')
 
-  let {frontmatter} = fm(html)
-
-  if (frontmatter) {
-    frontmatter = await posthtml(frontmatter, config)
-  }
+  const {frontmatter} = fm(html)
 
   html = `---\n${frontmatter}\n---\n\n${fm(html).body}`
 

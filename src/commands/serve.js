@@ -41,13 +41,27 @@ const serve = async (env = 'local', config = {}) => {
     const globalPaths = [
       'src/**',
       get(config, 'build.tailwind.config', 'tailwind.config.js'),
-      [...new Set(get(config, 'build.browsersync.watch', []))]
+      ...new Set(get(config, 'build.browsersync.watch', []))
     ]
 
     // Watch for Template file changes
     browsersync()
       .watch(templatePaths)
       .on('change', async file => {
+        if (config.events && typeof config.events.beforeCreate === 'function') {
+          await config.events.beforeCreate(config)
+        }
+
+        // Don't render if file type is not configured
+        // eslint-disable-next-line
+        const filetypes = templates.reduce((acc, template) => {
+          return [...acc, ...get(template, 'filetypes', ['html'])]
+        }, [])
+
+        if (!filetypes.includes(path.extname(file).slice(1))) {
+          return
+        }
+
         if (get(config, 'build.console.clear')) {
           clearConsole()
         }
@@ -58,10 +72,6 @@ const serve = async (env = 'local', config = {}) => {
 
         file = file.replace(/\\/g, '/')
         file = file.replace('meta.json', 'content.html')
-
-        if (config.events && typeof config.events.beforeCreate === 'function') {
-          await config.events.beforeCreate(config)
-        }
 
         const renderOptions = {
           maizzle: {
@@ -125,19 +135,22 @@ const serve = async (env = 'local', config = {}) => {
 
     // Initialize Browsersync
     browsersync()
-      .init({
-        notify: false,
-        open: false,
-        port: 3000,
-        server: {
-          baseDir,
-          directory: true
-        },
-        tunnel: false,
-        ui: {port: 3001},
-        logFileChanges: false,
-        ...get(config, 'build.browsersync', {})
-      }, () => {})
+      .init(
+        merge(
+          {
+            notify: false,
+            open: false,
+            port: 3000,
+            server: {
+              baseDir,
+              directory: true
+            },
+            tunnel: false,
+            ui: {port: 3001},
+            logFileChanges: false
+          },
+          get(config, 'build.browsersync', {})
+        ), () => {})
   } catch (error) {
     spinner.fail(error)
     throw error

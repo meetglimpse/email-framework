@@ -2,15 +2,19 @@ const test = require('ava')
 const Maizzle = require('../src')
 
 const path = require('path')
-const {readFileSync} = require('fs')
+const fs = require('fs')
 
-const fixture = file => readFileSync(path.join(__dirname, 'fixtures', `${file}.html`), 'utf8')
-const expected = file => readFileSync(path.join(__dirname, 'expected', `${file}.html`), 'utf8')
+const readFile = (dir, filename) => fs.promises
+  .readFile(path.join(__dirname, dir, `${filename}.html`), 'utf8')
+  .then(html => html.trim())
+
+const fixture = file => readFile('fixtures', file)
+const expected = file => readFile('expected', file)
 
 const renderString = (string, options = {}) => Maizzle.render(string, options).then(({html}) => html)
 
 test('compiles HTML string if no options are passed', async t => {
-  const source = fixture('basic')
+  const source = await fixture('basic')
 
   const html = await renderString(source)
 
@@ -18,24 +22,17 @@ test('compiles HTML string if no options are passed', async t => {
 })
 
 test('uses environment config file(s) if available', async t => {
-  const source = fixture('useConfig')
+  const source = await fixture('useConfig')
 
   const html = await renderString(source, {maizzle: {env: 'maizzle-ci'}})
 
-  t.is(html, expected('useConfig'))
-})
-
-test('inheritance', async t => {
-  let html = await renderString(fixture('inheritance'))
-  html = html.replace(/[^\S\r\n]+$/gm, '').trim()
-
-  t.is(html, expected('inheritance').trim())
+  t.is(html, await expected('useConfig'))
 })
 
 test('throws if first argument is not an HTML string', async t => {
   await t.throwsAsync(async () => {
-    await renderString(false)
-  }, {instanceOf: TypeError, message: 'first argument must be an HTML string, received false'})
+    await renderString()
+  }, {instanceOf: TypeError, message: 'first argument must be an HTML string, received undefined'})
 })
 
 test('throws if first argument is an empty string', async t => {
@@ -83,7 +80,7 @@ test('runs the `afterTransformers` event', async t => {
   t.is(result, `<div>bar</div>`)
 })
 
-test('multiple locals', async t => {
+test('locals work when defined in all supported places', async t => {
   const result = await renderString(`{{ page.one }}, {{ two }}, {{ three }}`, {
     maizzle: {
       one: 1,
@@ -129,4 +126,23 @@ test('prevents overwriting page object', async t => {
   })
 
   t.is(result, `1, undefined, undefined`)
+})
+
+test('preserves css in marked style tags (tailwindcss)', async t => {
+  const source = await fixture('transformers/preserve-transform-css')
+  const html = await renderString(source, {
+    // So that we don't compile twice
+    tailwind: {
+      compiled: ''
+    }
+  })
+
+  t.is(html, await expected('transformers/preserve-transform-css'))
+})
+
+test('@import css files in marked style tags', async t => {
+  const source = await fixture('transformers/atimport-in-style')
+  const html = await renderString(source)
+
+  t.is(html, await expected('transformers/atimport-in-style'))
 })

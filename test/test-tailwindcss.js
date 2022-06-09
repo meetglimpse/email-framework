@@ -9,7 +9,7 @@ test('throws on compile error', async t => {
   }, {instanceOf: Error, message: 'Tailwind CSS compilation failed'})
 })
 
-test('uses Tailwind defaults if no config specified', async t => {
+test('uses defaults if no config specified', async t => {
   const css = await Tailwind.compile(
     '@tailwind utilities;',
     '<p class="xl:z-0"></p>',
@@ -21,7 +21,7 @@ test('uses Tailwind defaults if no config specified', async t => {
   t.true(css.includes('.xl\\:z-0'))
 })
 
-test('uses CSS file provided in environment config', async t => {
+test('uses css file provided in environment config', async t => {
   const config = {
     env: 'production',
     build: {
@@ -89,7 +89,7 @@ test('uses maizzle template path as content source (single file)', async t => {
     {
       build: {
         templates: {
-          source: './test/stubs/tailwind/preserve.html'
+          source: './test/stubs/tailwind/content-source.html'
         }
       }
     }
@@ -113,5 +113,5 @@ test('uses custom postcss plugins from the maizzle config', async t => {
   const css = await Tailwind.compile('.test {transform: scale(0.5)}', '<div class="test">Test</a>', {}, maizzleConfig)
 
   t.not(css, undefined)
-  t.is(css.trim(), '.inline {display: inline !important} .table {display: table !important} .contents {display: contents !important} .transform {-webkit-transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y)) !important;transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y)) !important} .test {-webkit-transform: scale(0.5);transform: scale(0.5)}')
+  t.is(css.trim(), '.inline {display: inline !important} .table {display: table !important} .contents {display: contents !important} .truncate {overflow: hidden !important;text-overflow: ellipsis !important;white-space: nowrap !important} .uppercase {text-transform: uppercase !important} .lowercase {text-transform: lowercase !important} .capitalize {text-transform: capitalize !important} .test {-webkit-transform: scale(0.5);transform: scale(0.5)}')
 })
